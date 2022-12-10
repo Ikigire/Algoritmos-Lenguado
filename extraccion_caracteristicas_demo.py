@@ -153,7 +153,7 @@ cv2.waitKey(0)
 print("\n\nLa cantidad de pigmentos NEGROS encontrados es: {}".format(len(pigmentos_negros)))
 print("\n\nLa cantidad de pigmentos BLANCOS encontrados es: {}".format(len(pigmentos_blancos)))
 
-exit()
+# exit()
 # cv2.Laplacian()
 #Guardar imagen
 cv2.imwrite("pez70_new.jpg",new_img)
@@ -228,7 +228,7 @@ size[0] *= 5
 size[1] *= 5
 
 gray_img_text = cv2.resize(gray_img_text, tuple(reversed(size)), interpolation= cv2.INTER_AREA)
-
+gray_img_text = reduccionEscalaGrises(gray_img_text, 80, 0,0)
 cv2.imshow("Gray Scale for text",gray_img_text)
 cv2.waitKey(0)
 
@@ -273,3 +273,4 @@ x,y,w,h = cv2.boundingRect(img_contours[-1])
 proporcion = w/escala
 print("\n\nLa escala está dada por la proporcion: {} pixeles = {} {}; es decir: {} = {} {}".format(w,escala, unidad_medida, proporcion, 1, unidad_medida))
 print("\nLongitud del pez: {} {}\n\nAltura del pez:{} {}\n\nMedida de imágen dorsal: {} x {} {}".format((longitud_pez/proporcion),unidad_medida, (altura_pez/proporcion),unidad_medida, (longitud_dorsal/(proporcion*3)),(altitud_dorsal/(proporcion*3)), unidad_medida))
+print("El pez pesa aproximadamente {} g".format((longitud_pez/proporcion) * ((altura_pez/proporcion*2) * (altura_pez/proporcion*2)) / 29))

@@ -33,14 +33,12 @@ def reduccionEscalaGrises(img:math, umbral_scale_1:int = 70, umbral_scale_2:int 
         for y in range(height):
             if img[y,x] < umbral_scale_1:
                 img[y,x] = 0
+            elif img[y,x] < umbral_scale_2:
+                img[y,x] = 85
+            elif img[y,x] < umbral_scale_3:
+                img[y,x] = 170
             else:
-                if img[y,x] < umbral_scale_2:
-                    img[y,x] = 85
-                else:
-                    if img[y,x] < umbral_scale_3:
-                        img[y,x] = 170
-                    else:
-                        img[y,x] = 255
+                img[y,x] = 255
     
     return img
 

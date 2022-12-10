@@ -118,7 +118,7 @@ if __name__ == "__main__":
 
     archivos = []
     for archivo in nombre_archivos:
-        if archivo.split(".")[-1].lower() in ["jpg", "png", "jpeg", "webp"]:
+        if archivo.split(".")[-1].lower() in ["jpg", "png", "jpeg"]:
             archivos.append(archivo)
 
     nombre_archivos = archivos

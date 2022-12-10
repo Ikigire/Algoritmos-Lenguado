@@ -3,12 +3,13 @@ from argparse import ArgumentParser
 import numpy as np
 import multiprocessing as mp
 from multiprocessing import Pool
+import pandas as pd
 
 from OperacionesIMG import reduccionEscalaGrises
 
 # "ID_pez", "peso", "Long", "ASDA", "IEDA", "ASFA", "IEFA", "FAC", "TAC", "FANE", "TANE", "glucosa_in", "lactosa_in", "cortisol_in", "glucosa_est", "lactosa_est", "cortisol_est", "opercula", "ojo_ojo", "ojo", "boca", "agalla", "aleta", "nariz", "ojo_cachete", "poro_aleta", "ancho", "ojo_agalla", "agalla_nariz", "agalla_boca"
 
-def extraer_caracteristicas_carpeta(input_folder: str, output_folder_name: str = "output", output_size: float = 1, method: str = "sc", processes: int = 0, save_ouput: bool = True):
+def extraer_caracteristicas_carpeta(input_folder: str, output_folder_name: str = "output", output_size: tuple = (800,600), method: str = "sc", processes: int = 0, save_ouput: bool = True):
     if input_folder is None:
         raise Exception("input_folder field is required")
     #Obteniendo los nombres de archivos dentro de la carpeta
@@ -21,10 +22,6 @@ def extraer_caracteristicas_carpeta(input_folder: str, output_folder_name: str =
     if(not os.path.exists(output_folder_path)) and save_ouput:
         os.mkdir(output_folder_path)
         print("Directorio creado")
-
-    # Valor en pixeles que tendrán las imágenes de salida
-    if output_size < 0:
-        output_size = 1
 
     # Revisando el método seleccionado para la ejecución
     if method == "sc": # Usando Solamente el nucleo principal
@@ -253,7 +250,7 @@ def extraer_caracteristicas(folder_path, archivo, output_path, output_size, remo
     #Dibujar contornos
     cv2.drawContours(mask, img_contours, len(img_contours)-1, 255, -1)
     new_img = None
-    print("Remove bg: ",remove_background)
+    # print("Remove bg: ",remove_background)
     if remove_background:
         #Substracción del fondo
         new_img = cv2.bitwise_and(img, img, mask=mask)
@@ -325,7 +322,7 @@ def extraer_caracteristicas(folder_path, archivo, output_path, output_size, remo
 
     pigmentos_blancos = list(filter(lambda contour: cv2.contourArea(contour) > 45, pigmentos_blancos))
 
-    print("\n\nPigmentos Negros: {}\nPigmentos Blancos: {}\n\n".format(len(pigmentos_negros), len(pigmentos_blancos)))
+    # print("\n\nPigmentos Negros: {}\nPigmentos Blancos: {}\n\n".format(len(pigmentos_negros), len(pigmentos_blancos)))
     #Calculando las medidas del pez
     longitud_pez = longitud_pez/proporcion
     altura_pez   = altura_pez/proporcion
@@ -334,6 +331,27 @@ def extraer_caracteristicas(folder_path, archivo, output_path, output_size, remo
     altitud_dorsal  = altitud_dorsal/(proporcion*3)
 
     # Guardando datos del pez
+    datos_pez = []
+    datos_dorsal = []
+
+
+    #Datos del Pez
+    # datos_pez.append(new_img)
+    # datos_pez.append("{}/{}{}".format(output_path, "pez/new_", archivo))
+    # datos_pez.append(longitud_pez)
+    # datos_pez.append(altura_pez)
+    # datos_pez.append(unidad_medida)
+    #Datos del Dorsal
+    # datos_dorsal.append(dorsal)
+    # datos_dorsal.append("{}/{}{}".format(output_path, "dorsal/new_dorsal_", archivo))
+    # datos_dorsal.append(longitud_dorsal)
+    # datos_dorsal.append(altitud_dorsal)
+    # datos_dorsal.append((longitud_dorsal * altitud_dorsal))
+    # datos_dorsal.append(len(pigmentos_negros))
+    # datos_dorsal.append((len(pigmentos_negros)/(longitud_dorsal*altitud_dorsal)))
+    # datos_dorsal.append(len(pigmentos_blancos))
+    # datos_dorsal.append((len(pigmentos_blancos)/(longitud_dorsal*altitud_dorsal)))
+    # datos_dorsal.append(unidad_medida)
     datos_pez = [new_img, "{}/{}{}".format(output_path, "pez/new_", archivo), longitud_pez, altura_pez, unidad_medida]
     datos_dorsal = [dorsal, "{}/{}{}".format(output_path, "dorsal/new_dorsal_", archivo), longitud_dorsal, altitud_dorsal, (longitud_dorsal*altitud_dorsal), len(pigmentos_negros), (len(pigmentos_negros)/(longitud_dorsal*altitud_dorsal)), len(pigmentos_blancos), (len(pigmentos_blancos)/(longitud_dorsal*altitud_dorsal)), unidad_medida]
     
@@ -379,8 +397,8 @@ if __name__ == "__main__":
 
     #Definiendo si se elimina el fondo o no
     remove_background = bool(int(arguments["remove_background"]))
-    print(arguments["remove_background"])
-    print("Remove Background: ", remove_background)
+    # print(arguments["remove_background"])
+    # print("Remove Background: ", remove_background)
 
     #Obteniendo los nombres de archivos dentro de la carpeta
     nombre_archivos = list(os.listdir(input_folder))
@@ -402,7 +420,7 @@ if __name__ == "__main__":
     # Valor en pixeles que tendrán las imágenes de salida
     output_size = str(arguments["output_size"])
     output_size = output_size.strip(' ()')
-    print("OS: ", output_size)
+    # print("OS: ", output_size)
     if output_size != "":
         output_size = output_size.split(',')
         num1 = int(output_size[0])
@@ -424,13 +442,59 @@ if __name__ == "__main__":
             # if img is None:
             #     continue
             # cv2.imwrite(output_file,img)
+
+        df = pd.DataFrame()
         if not skip_save:
+            imagenes_dorsales = []
+            imagenes_peces = []
             print("Resultados:")
             for result in results:
                 pez, dorsal = result
                 if not pez is None:
                     saveFile(pez[1],pez[0])
+                    imagenes_peces.append(pez[1])
                     saveFile(dorsal[1],dorsal[0])
+                    imagenes_dorsales.append(dorsal[1])
+            
+            df['peces'] = imagenes_peces
+            df['dorsales'] = imagenes_dorsales
+
+        # from pez
+        longitudes = []
+        altitudes = []
+        
+        # From dorsal
+        longitudes_dorsal = []
+        altitudes_dorsal = []
+        area_dorsal = []
+        pigmentos_negros = []
+        dispersion_pigmentos_negros = []
+        pigmentos_blancos = []
+        dispersion_pigmentos_blancos = []
+        for result in results:
+            pez, dorsal = result
+            longitudes.append(pez[2])
+            altitudes.append(pez[3])
+            
+            longitudes_dorsal.append(dorsal[2])
+            altitudes_dorsal.append(dorsal[3])
+            area_dorsal.append(dorsal[4])
+            pigmentos_negros.append(dorsal[5])
+            dispersion_pigmentos_negros.append(dorsal[6])
+            pigmentos_blancos.append(dorsal[7])
+            dispersion_pigmentos_blancos.append(dorsal[8])
+        
+        df['longitud'] = longitudes
+        df['altura'] = altitudes
+        df['longitud_dorsal'] = longitudes_dorsal
+        df['altitud_dorsal'] = altitudes_dorsal
+        df['area_dorsal'] = area_dorsal
+        df['pig_negros'] = pigmentos_negros
+        df['disp_pig_negros'] = dispersion_pigmentos_negros
+        df['pig_blancos'] = pigmentos_blancos
+        df['disp_pig_blancos'] = dispersion_pigmentos_blancos
+
+        df.to_csv("{}/{}".format(output_folder_path, "datos_algoritmo.csv"), columns=df.columns)
     else: 
         if arguments["method"] == "mc": # Trabajando con todos los nucleos del procesador
             procesos = arguments["processes"]
@@ -449,14 +513,57 @@ if __name__ == "__main__":
                       for archivo in nombre_archivos])
 
                 pool.close()
-            
+            df = pd.DataFrame()
             if not skip_save:
+                imagenes_dorsales = []
+                imagenes_peces = []
                 print("Resultados:")
                 for result in results:
                     pez, dorsal = result
                     if not pez is None:
                         saveFile(pez[1],pez[0])
+                        imagenes_peces.append(pez[1])
                         saveFile(dorsal[1],dorsal[0])
+                        imagenes_dorsales.append(dorsal[1])
+                
+                df['peces'] = imagenes_peces
+                df['dorsales'] = imagenes_dorsales
+            # From pez
+            longitudes = []
+            altitudes = []
+
+            # From dorsal
+            longitudes_dorsal = []
+            altitudes_dorsal = []
+            area_dorsal = []
+            pigmentos_negros = []
+            dispersion_pigmentos_negros = []
+            pigmentos_blancos = []
+            dispersion_pigmentos_blancos = []
+            for result in results:
+                pez, dorsal = result
+                longitudes.append(pez[2])
+                altitudes.append(pez[3])
+                
+                longitudes_dorsal.append(dorsal[2])
+                altitudes_dorsal.append(dorsal[3])
+                area_dorsal.append(dorsal[4])
+                pigmentos_negros.append(dorsal[5])
+                dispersion_pigmentos_negros.append(dorsal[6])
+                pigmentos_blancos.append(dorsal[7])
+                dispersion_pigmentos_blancos.append(dorsal[8])
+            
+            df['longitud'] = longitudes
+            df['altura'] = altitudes
+            df['longitud_dorsal'] = longitudes_dorsal
+            df['altitud_dorsal'] = altitudes_dorsal
+            df['area_dorsal'] = area_dorsal
+            df['pig_negros'] = pigmentos_negros
+            df['disp_pig_negros'] = dispersion_pigmentos_negros
+            df['pig_blancos'] = pigmentos_blancos
+            df['disp_pig_blancos'] = dispersion_pigmentos_blancos
+
+            df.to_csv("{}/{}".format(output_folder_path, "datos_algoritmo.csv"), columns=df.columns)
 
             # with Pool(processes=procesos) as pool:
             #     pool.starmap(saveFile, [(output_file, img) for output_file, img in results])
